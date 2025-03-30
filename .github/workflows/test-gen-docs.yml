@@ -1,0 +1,34 @@
+name: Generate Docs
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  docs:
+    if: github.event.pull_request.draft == false
+    name: Docs
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: awalsh128/cache-apt-pkgs-action@latest
+        with:
+          packages: libwebkit2gtk-4.1-dev libgtk-3-dev libayatana-appindicator3-dev libxdo-dev libjavascriptcoregtk-4.1-dev
+          version: 1.0
+      - name: Install Rust ${{ env.rust_nightly }}
+        uses: dtolnay/rust-toolchain@nightly
+        with:
+          toolchain: ${{ env.rust_nightly }}
+      - uses: Swatinem/rust-cache@v2
+        with:
+          cache-all-crates: "true"
+      - name: "doc --lib --all-features"
+        run: |
+          cargo doc --workspace --no-deps --all-features --document-private-items
+        # env:
+        #   RUSTFLAGS: --cfg docsrs
+        #   RUSTDOCFLAGS: --cfg docsrs
+        # todo: re-enable warnings, private items
+        # RUSTDOCFLAGS: --cfg docsrs -Dwarnings
+        #  --document-private-items
+
